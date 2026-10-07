@@ -1,580 +1,481 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Tulenoween</title>
-<style>
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Хэллоуинская Игра: Соедини Пары</title>
+    <!-- Шрифт Eater: рубленый и жуткий -->
+    <link href="https://fonts.googleapis.com/css2?family=Eater&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-  html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: #000;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
-    color: #fff;
-  }
+        body {
+            font-family: 'Eater', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background-color: #2a0a38;
+        }
 
-  /* ===== ЭКРАН ЗАГРУЗКИ ===== */
-  #loader {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    transition: opacity 0.6s ease, visibility 0.6s ease;
-  }
+        /* --- ВРАЩАЮЩИЙСЯ И РАЗМЫТЫЙ ФОН (ВОРОНКА) --- */
+        #bg-spiral {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-radial-gradient(
+                circle at center,
+                #f26d21 0px,
+                #f26d21 60px,
+                #572a7c 60px,
+                #572a7c 120px
+            );
+            animation: spin 25s linear infinite;
+            filter: blur(12px);
+            z-index: -1;
+        }
 
-  #loader.hidden {
-    opacity: 0;
-    visibility: hidden;
-  }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-  .spinner {
-    width: 44px;
-    height: 44px;
-    border: 3px solid rgba(255, 255, 255, 0.15);
-    border-top-color: #ff8c1a;
-    border-radius: 50%;
-    animation: spin 0.9s linear infinite;
-    margin-bottom: 18px;
-  }
+        /* --- ИГРОВОЙ КОНТЕЙНЕР --- */
+        .game-container {
+            background: rgba(25, 0, 40, 0.88);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), inset 0 0 25px rgba(242, 109, 33, 0.4);
+            text-align: center;
+            max-width: 900px;
+            width: 95%;
+            backdrop-filter: blur(6px);
+            border: 3px solid #f26d21;
+            z-index: 1;
+            transition: all 0.5s ease;
+        }
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
+        /* Основной заголовок игры */
+        .main-title {
+            color: #f26d21;
+            font-size: 38px;
+            margin-bottom: 25px;
+            text-shadow: 2px 2px 0 #572a7c, 4px 4px 0 #000;
+            letter-spacing: 1px;
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
 
-  .loader-text {
-    font-size: 15px;
-    color: rgba(255, 255, 255, 0.55);
-    letter-spacing: 0.5px;
-  }
+        @keyframes titleGlow {
+            from { text-shadow: 2px 2px 0 #572a7c, 4px 4px 0 #000, 0 0 10px #f26d21; }
+            to { text-shadow: 2px 2px 0 #572a7c, 4px 4px 0 #000, 0 0 25px #f26d21, 0 0 35px #f26d21; }
+        }
 
-  /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
-  #main {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.8s ease;
-  }
+        /* --- СТРОГО 2 СТОЛБЦА --- */
+        .board {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 25px;
+            transition: opacity 0.5s ease;
+        }
 
-  #main.visible {
-    opacity: 1;
-  }
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+            width: 50%;
+        }
 
-  #imageWrap {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    perspective: 1500px;
-  }
+        /* --- СЛОВА --- */
+        .word-item {
+            background-color: #f26d21;
+            color: #fff;
+            padding: 12px 8px;
+            border-radius: 10px;
+            font-family: 'Eater', sans-serif;
+            font-size: 20px;
+            cursor: grab;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+            border: 2px solid transparent;
+            user-select: none;
+            text-shadow: 1px 1px 2px #000;
+            word-break: break-word;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+            touch-action: none;
+            animation: float 4s ease-in-out infinite;
+        }
 
-  #mainImage {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    user-select: none;
-    -webkit-user-drag: none;
-    transition: opacity 0.5s ease;
-    cursor: pointer;
-    z-index: 10;
-  }
+        .word-item:nth-child(odd) { animation-delay: 0s; }
+        .word-item:nth-child(even) { animation-delay: 1s; }
 
-  #pumpkinEmoji {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    font-size: 140px;
-    pointer-events: none;
-    opacity: 0;
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
-    z-index: 20;
-    filter: drop-shadow(0 0 30px rgba(255, 140, 26, 0.8));
-  }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
 
-  #pumpkinEmoji.show {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
+        .word-item:active {
+            cursor: grabbing;
+        }
 
-  /* ===== 3D СЦЕНА ===== */
-  #flipScene {
-    position: absolute;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    perspective: 1600px;
-    z-index: 15;
-  }
+        .word-item:hover {
+            transform: translateY(-3px) scale(1.03);
+            background-color: #ff8c42;
+            box-shadow: 0 6px 15px rgba(242, 109, 33, 0.6);
+            animation-play-state: paused;
+        }
 
-  #flipScene.active {
-    display: flex;
-  }
+        .word-item.dragging {
+            opacity: 0.6;
+            border: 2px dashed #fff;
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+            animation-play-state: paused;
+        }
 
-  #flipCard {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transform-style: preserve-3d;
-    transition: transform 0.15s ease-out;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+        .word-item.selected {
+            border-color: #fff;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #f26d21, 0 0 10px #fff;
+            background-color: #d95d14;
+            animation-play-state: paused;
+        }
 
-  .flip-face {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
+        .word-item.matched {
+            background-color: #4a4a4a;
+            color: #888;
+            pointer-events: none;
+            box-shadow: none;
+            transform: scale(0.95);
+            border-color: #333;
+            text-decoration: line-through;
+            animation: pop 0.4s ease, fadeOut 0.4s ease 0.3s forwards;
+        }
 
-  .flip-face img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    user-select: none;
-    -webkit-user-drag: none;
-  }
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); background-color: #4caf50; }
+            100% { transform: scale(0.95); }
+        }
 
-  #flipBack {
-    transform: rotateY(180deg);
-  }
+        @keyframes fadeOut {
+            to { opacity: 0.5; }
+        }
 
-  .flip-hint {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 12px;
-    letter-spacing: 1.5px;
-    color: rgba(255,255,255,0.5);
-    text-transform: uppercase;
-    pointer-events: none;
-    z-index: 25;
-    animation: hintPulse 2s ease-in-out infinite;
-  }
+        .word-item.wrong {
+            background-color: #8b0000;
+            animation: shake 0.4s ease;
+        }
 
-  @keyframes hintPulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 0.9; }
-  }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px) rotate(-2deg); }
+            40% { transform: translateX(8px) rotate(2deg); }
+            60% { transform: translateX(-6px) rotate(-1deg); }
+            80% { transform: translateX(6px) rotate(1deg); }
+        }
 
-  /* ===== ПЛАШКА APPLE LIQUID GLASS ===== */
-  #glassPlate {
-    position: absolute;
-    bottom: 28px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 30;
-    padding: 14px 28px;
-    border-radius: 26px;
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(30px) saturate(180%);
-    -webkit-backdrop-filter: blur(30px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.35),
-      inset 0 1px 1px rgba(255, 255, 255, 0.45),
-      inset 0 -1px 1px rgba(255, 255, 255, 0.1);
-    text-align: center;
-    white-space: nowrap;
-    transition: transform 0.4s ease, opacity 0.5s ease;
-  }
+        /* --- ФИНАЛЬНЫЙ ЭКРАН --- */
+        .end-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 30px 10px;
+            animation: fadeInEnd 0.8s ease forwards;
+        }
 
-  #glassPlate.hidden {
-    opacity: 0;
-    transform: translateX(-50%) translateY(30px);
-    pointer-events: none;
-  }
+        @keyframes fadeInEnd {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
 
-  #glassPlate::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 10%;
-    right: 10%;
-    height: 50%;
-    border-radius: 26px 26px 60% 60%;
-    background: linear-gradient(to bottom, rgba(255,255,255,0.22), rgba(255,255,255,0));
-    pointer-events: none;
-  }
+        .end-screen h1 {
+            color: #f26d21;
+            font-size: 32px;
+            text-shadow: 2px 2px 0 #572a7c, 4px 4px 0 #000;
+            margin-bottom: 10px;
+        }
 
-  .plate-label {
-    display: block;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.75);
-    margin-bottom: 4px;
-  }
+        .end-screen p {
+            color: #fff;
+            font-size: 22px;
+            margin: 5px 0;
+            text-shadow: 1px 1px 2px #000;
+        }
 
-  #timerDisplay {
-    display: block;
-    font-size: 30px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 2px;
-    color: #fff;
-    text-shadow: 0 0 20px rgba(255, 140, 26, 0.6);
-    transition: color 0.3s ease;
-  }
+        .end-screen p.sub-text {
+            font-style: italic;
+            color: #ccc;
+            font-size: 20px;
+        }
 
-  #timerDisplay.savetext {
-    color: #ff8c1a;
-    text-shadow: 0 0 30px rgba(255, 140, 26, 1);
-    animation: pulse 0.8s ease-in-out infinite alternate;
-    font-size: 22px;
-    letter-spacing: 3px;
-  }
+        .end-screen p.final-text {
+            color: #f26d21;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 #000, 0 0 10px #f26d21;
+        }
 
-  @keyframes pulse {
-    from { transform: scale(1); }
-    to { transform: scale(1.06); }
-  }
-
-  @media (max-width: 480px) {
-    #glassPlate { padding: 12px 22px; bottom: 22px; }
-    #timerDisplay { font-size: 24px; }
-    #timerDisplay.savetext { font-size: 18px; }
-    .plate-label { font-size: 11px; }
-    #pumpkinEmoji { font-size: 100px; }
-    .flip-hint { bottom: 8px; font-size: 10px; }
-  }
-</style>
+        /* --- АДАПТИВНОСТЬ ДЛЯ ТЕЛЕФОНОВ --- */
+        @media (max-width: 600px) {
+            .main-title { font-size: 24px; margin-bottom: 15px; }
+            .game-container { padding: 15px; }
+            .word-item { font-size: 14px; padding: 8px 4px; min-height: 50px; }
+            .board { gap: 8px; }
+            .column { gap: 8px; }
+            .end-screen h1 { font-size: 22px; }
+            .end-screen p { font-size: 16px; }
+            .end-screen p.final-text { font-size: 18px; }
+        }
+    </style>
 </head>
 <body>
 
-  <div id="loader">
-    <div class="spinner"></div>
-    <div class="loader-text">Загрузка...</div>
-  </div>
+<div id="bg-spiral"></div>
 
-  <div id="main">
-    <div id="imageWrap">
-      <img id="mainImage"
-           src="https://markbartolomeev-blip.github.io/tulenoween_ARG/953E7D71-CB75-4280-9C05-90CD076074B4.jpeg"
-           alt="Tulenoween">
-
-      <div id="pumpkinEmoji">🎃</div>
-
-      <div id="flipScene">
-        <div id="flipCard">
-          <div class="flip-face" id="flipFront">
-            <img id="frontImg" src="" alt="Front" draggable="false">
-          </div>
-          <div class="flip-face" id="flipBack">
-            <img id="backImg"
-                 src="https://markbartolomeev-blip.github.io/tulenoween_ARG/5804DA2B-A9FF-4168-9755-269AEDE9D162.jpeg"
-                 alt="Back" draggable="false">
-          </div>
-        </div>
-        <div class="flip-hint">← Прокрути →</div>
-      </div>
+<div class="game-container">
+    <!-- Основной заголовок (скрывается в конце) -->
+    <h1 class="main-title" id="main-title">Соедини Пары</h1>
+    
+    <!-- Игровое поле (скрывается в конце) -->
+    <div class="board" id="board">
+        <div class="column" id="col-left"></div>
+        <div class="column" id="col-right"></div>
     </div>
 
-    <div id="glassPlate">
-      <span class="plate-label" id="plateLabel">До Открытия:</span>
-      <span id="timerDisplay">00:00:00</span>
+    <!-- Финальный экран (без кнопки) -->
+    <div class="end-screen" id="end-screen">
+        <h1>ТЫ ВЫПОЛНИЛ(-А) СВОЕ ЗАДАНИЕ!</h1>
+        <p class="sub-text">можешь спать спокойно... Пока...</p>
+        <p class="final-text">Не забудь отправить скрин в группу!</p>
     </div>
-  </div>
+</div>
 
 <script>
-(function () {
-  "use strict";
+    const pairs = [
+        { id: 1, left: "заколдовать", right: "тюленя" },
+        { id: 2, left: "сварить", right: "зелье" },
+        { id: 3, left: "узреть", right: "книгу" },
+        { id: 4, left: "обратить", right: "тыкву" },
+        { id: 5, left: "прийти на", right: "кладбище" },
+        { id: 6, left: "убрать", right: "могилу" },
+        { id: 7, left: "вырезать", right: "фонарь Джека" },
+        { id: 8, left: "испугаться", right: "призрака" },
+        { id: 9, left: "съесть", right: "мозги" },
+        { id: 10, left: "собрать", right: "конфеты" }
+    ];
 
-  /* ========== КОНФИГ ========== */
-  const OPENING_DATE = new Date(2026, 8, 27, 0, 0, 0); // 25 сентября 2026, 00:00
-  const BASE_URL = "https://markbartolomeev-blip.github.io/tulenoween_ARG/";
-  const IMG_AFTER_FRONT = "29722FF0-5127-4496-AB44-19FD50837348.jpeg";
-  const IMG_AFTER_BACK  = "5804DA2B-A9FF-4168-9755-269AEDE9D162.jpeg";
-  const REQUIRED_TAPS = 10;
-  const SECRET_DURATION = 3000;
+    let selectedLeft = null;
+    let selectedRight = null;
+    let matchesCount = 0;
 
-  /* ========== ЭЛЕМЕНТЫ ========== */
-  const loader       = document.getElementById("loader");
-  const main         = document.getElementById("main");
-  const img          = document.getElementById("mainImage");
-  const pumpkin      = document.getElementById("pumpkinEmoji");
-  const flipScene    = document.getElementById("flipScene");
-  const flipCard     = document.getElementById("flipCard");
-  const frontImg     = document.getElementById("frontImg");
-  const backImg      = document.getElementById("backImg");
-  const timerDisplay = document.getElementById("timerDisplay");
-  const plateLabel   = document.getElementById("plateLabel");
-  const glassPlate   = document.getElementById("glassPlate");
-
-  let opened = false;
-
-  /* ========== ПРЕДЗАГРУЗКА КАРТИНОК ДЛЯ 3D ========== */
-  const preloadedFront = new Image();
-  const preloadedBack  = new Image();
-  preloadedFront.src = BASE_URL + IMG_AFTER_FRONT;
-  preloadedBack.src  = BASE_URL + IMG_AFTER_BACK;
-
-  /* ========== СТАРТ САЙТА ========== */
-  function startSite() {
-    loader.classList.add("hidden");
-    main.classList.add("visible");
-    startTimer();
-  }
-
-  if (img.complete && img.naturalWidth > 0) {
-    setTimeout(startSite, 300);
-  } else {
-    img.addEventListener("load", () => setTimeout(startSite, 300));
-    img.addEventListener("error", () => setTimeout(startSite, 300));
-  }
-
-  /* ========== ТАЙМЕР ========== */
-  let timerInterval = null;
-
-  function pad(n) { return String(n).padStart(2, "0"); }
-
-  function updateTimer() {
-    if (opened) return;
-
-    const diff = OPENING_DATE.getTime() - Date.now();
-
-    if (diff <= 0) {
-      triggerOpening();
-      return;
+    function shuffle(array) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
     }
 
-    const totalSec = Math.floor(diff / 1000);
-    const days  = Math.floor(totalSec / 86400);
-    const hours = Math.floor((totalSec % 86400) / 3600);
-    const mins  = Math.floor((totalSec % 3600) / 60);
-    const secs  = totalSec % 60;
+    function initGame() {
+        const leftCol = document.getElementById('col-left');
+        const rightCol = document.getElementById('col-right');
+        const mainTitle = document.getElementById('main-title');
+        const board = document.getElementById('board');
+        const endScreen = document.getElementById('end-screen');
+        
+        mainTitle.style.display = 'block';
+        board.style.display = 'flex';
+        endScreen.style.display = 'none';
+        
+        leftCol.innerHTML = '';
+        rightCol.innerHTML = '';
+        
+        selectedLeft = null;
+        selectedRight = null;
+        matchesCount = 0;
 
-    timerDisplay.textContent = days > 0
-      ? days + "д " + pad(hours) + ":" + pad(mins) + ":" + pad(secs)
-      : pad(hours) + ":" + pad(mins) + ":" + pad(secs);
-  }
+        let leftWords = pairs.map(p => ({ id: p.id, text: p.left }));
+        let rightWords = pairs.map(p => ({ id: p.id, text: p.right }));
 
-  function startTimer() {
-    updateTimer();
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(updateTimer, 1000);
-  }
+        leftWords = shuffle(leftWords);
+        rightWords = shuffle(rightWords);
 
-  /* ========== ОТКРЫТИЕ ========== */
-  function triggerOpening() {
-    if (opened) return;
-    opened = true;
+        function createWordElement(wordObj, columnType) {
+            const div = document.createElement('div');
+            div.classList.add('word-item');
+            div.textContent = wordObj.text;
+            div.dataset.id = wordObj.id;
+            div.dataset.column = columnType;
+            div.setAttribute('draggable', 'true');
+            
+            div.addEventListener('click', () => handleWordClick(div));
+            
+            div.addEventListener('dragstart', handleDragStart);
+            div.addEventListener('dragover', handleDragOver);
+            div.addEventListener('drop', handleDrop);
+            div.addEventListener('dragend', handleDragEnd);
+            
+            return div;
+        }
 
-    clearInterval(timerInterval);
-
-    function show3D() {
-      frontImg.src = preloadedFront.src;
-      backImg.src  = preloadedBack.src;
-
-      img.style.opacity = "0";
-      glassPlate.classList.add("hidden");
-
-      setTimeout(() => {
-        img.style.display = "none";
-        pumpkin.style.display = "none";
-        flipScene.classList.add("active");
-        enableFlip();
-      }, 400);
-
-      if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+        leftWords.forEach(word => leftCol.appendChild(createWordElement(word, 'left')));
+        rightWords.forEach(word => rightCol.appendChild(createWordElement(word, 'right')));
     }
 
-    if (preloadedFront.complete && preloadedBack.complete) {
-      show3D();
-    } else {
-      let loaded = 0;
-      const onOneLoaded = () => {
-        loaded++;
-        if (loaded >= 2) show3D();
-      };
-      if (preloadedFront.complete) loaded++; else preloadedFront.addEventListener("load", onOneLoaded, { once: true });
-      if (preloadedBack.complete)  loaded++; else preloadedBack.addEventListener("load",  onOneLoaded, { once: true });
+    // --- ЛОГИКА DRAG & DROP ---
+    let draggedElement = null;
 
-      setTimeout(() => {
-        if (!flipScene.classList.contains("active")) show3D();
-      }, 5000);
+    function handleDragStart(e) {
+        draggedElement = this;
+        this.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', this.textContent);
+        e.dataTransfer.effectAllowed = 'move';
     }
-  }
 
-  /* ========== 3D ПРОКРУТКА ========== */
-  let isDragging = false;
-  let startX = 0;
-  let currentRot = 0;
-  let startRot = 0;
-  let velocity = 0;
-  let lastX = 0;
-  let lastTime = 0;
-  let rafId = null;
-  let flipEnabled = false;
-
-  function enableFlip() {
-    if (flipEnabled) return;
-    flipEnabled = true;
-
-    const el = flipScene;
-    el.addEventListener("mousedown", onDown);
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    el.addEventListener("touchstart", onDown, { passive: false });
-    window.addEventListener("touchmove", onMove, { passive: false });
-    window.addEventListener("touchend", onUp);
-  }
-
-  function getX(e) {
-    if (e.touches && e.touches.length) return e.touches[0].clientX;
-    if (e.changedTouches && e.changedTouches.length) return e.changedTouches[0].clientX;
-    return e.clientX;
-  }
-
-  function onDown(e) {
-    isDragging = true;
-    startX = getX(e);
-    startRot = currentRot;
-    lastX = startX;
-    lastTime = performance.now();
-    velocity = 0;
-    cancelAnimationFrame(rafId);
-    if (e.cancelable) e.preventDefault();
-  }
-
-  function onMove(e) {
-    if (!isDragging) return;
-    const x = getX(e);
-    const dx = x - startX;
-    const sensitivity = 0.5;
-    currentRot = startRot + dx * sensitivity;
-
-    const now = performance.now();
-    const dt = now - lastTime;
-    if (dt > 0) velocity = (x - lastX) / dt * 16;
-    lastX = x;
-    lastTime = now;
-
-    applyRotation();
-    if (e.cancelable) e.preventDefault();
-  }
-
-  function onUp() {
-    if (!isDragging) return;
-    isDragging = false;
-    const inertia = velocity * 8;
-    const target = currentRot + inertia;
-    const normalized = ((target % 360) + 360) % 360;
-    let snapTarget;
-    if (normalized < 90 || normalized >= 270) {
-      snapTarget = Math.round(target / 360) * 360;
-    } else {
-      snapTarget = Math.round((target - 180) / 360) * 360 + 180;
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
     }
-    animateTo(snapTarget);
-  }
 
-  function animateTo(target) {
-    const start = currentRot;
-    const delta = target - start;
-    const duration = 500;
-    const t0 = performance.now();
-
-    function step(t) {
-      const p = Math.min((t - t0) / duration, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      currentRot = start + delta * eased;
-      applyRotation();
-      if (p < 1) rafId = requestAnimationFrame(step);
-      else { currentRot = target; applyRotation(); }
+    function handleDrop(e) {
+        e.preventDefault();
+        const target = e.target.closest('.word-item');
+        
+        if (draggedElement && target && draggedElement !== target && draggedElement.dataset.column === target.dataset.column) {
+            const tempText = draggedElement.textContent;
+            const tempId = draggedElement.dataset.id;
+            
+            draggedElement.textContent = target.textContent;
+            draggedElement.dataset.id = target.dataset.id;
+            
+            target.textContent = tempText;
+            target.dataset.id = tempId;
+        }
     }
-    rafId = requestAnimationFrame(step);
-  }
 
-  function applyRotation() {
-    flipCard.style.transform = "rotateY(" + currentRot + "deg)";
-  }
-
-  /* ========== СЕКРЕТ (10 ТАПОВ) ========== */
-  let tapCount = 0;
-  let tapResetTimer = null;
-  let secretTimeout = null;
-  let secretActive = false;
-
-  function handleTap() {
-    if (secretActive || opened) return;
-
-    tapCount++;
-    clearTimeout(tapResetTimer);
-    tapResetTimer = setTimeout(() => { tapCount = 0; }, 1500);
-
-    if (navigator.vibrate) navigator.vibrate(8);
-
-    if (tapCount >= REQUIRED_TAPS) {
-      tapCount = 0;
-      clearTimeout(tapResetTimer);
-      activateSecret();
+    function handleDragEnd() {
+        this.classList.remove('dragging');
+        draggedElement = null;
     }
-  }
 
-  function activateSecret() {
-    secretActive = true;
+    // --- ЛОГИКА ВЫБОРА И СОВПАДЕНИЯ ---
+    function handleWordClick(element) {
+        if (element.classList.contains('matched') || element.classList.contains('dragging')) return;
 
-    img.style.opacity = "0.08";
-    pumpkin.classList.add("show");
+        const column = element.dataset.column;
 
-    plateLabel.textContent = "";
-    timerDisplay.textContent = "SAVE THE SON";
-    timerDisplay.classList.add("savetext");
+        if (element.classList.contains('selected')) {
+            element.classList.remove('selected');
+            if (column === 'left') selectedLeft = null;
+            if (column === 'right') selectedRight = null;
+            return;
+        }
 
-    if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+        if (column === 'left') {
+            if (selectedLeft) selectedLeft.classList.remove('selected');
+            selectedLeft = element;
+        } else {
+            if (selectedRight) selectedRight.classList.remove('selected');
+            selectedRight = element;
+        }
+        
+        element.classList.add('selected');
 
-    clearTimeout(secretTimeout);
-    secretTimeout = setTimeout(() => {
-      img.style.opacity = "1";
-      pumpkin.classList.remove("show");
-      timerDisplay.classList.remove("savetext");
+        if (selectedLeft && selectedRight) {
+            checkMatch();
+        }
+    }
 
-      if (!opened) {
-        plateLabel.textContent = "До Открытия:";
-        updateTimer();
-      }
-      secretActive = false;
-    }, SECRET_DURATION);
-  }
+    function checkMatch() {
+        const idLeft = selectedLeft.dataset.id;
+        const idRight = selectedRight.dataset.id;
 
-  if (window.PointerEvent) {
-    img.addEventListener("pointerdown", handleTap);
-  } else {
-    img.addEventListener("click", handleTap);
-    img.addEventListener("touchstart", function (e) {
-      e.preventDefault();
-      handleTap();
-    }, { passive: false });
-  }
+        if (idLeft === idRight) {
+            // Верное совпадение
+            selectedLeft.classList.remove('selected');
+            selectedRight.classList.remove('selected');
+            
+            selectedLeft.classList.add('matched');
+            selectedRight.classList.add('matched');
+            
+            selectedLeft = null;
+            selectedRight = null;
+            matchesCount++;
 
-})();
+            if (matchesCount === pairs.length) {
+                // Победа! Показываем финальный экран
+                setTimeout(() => {
+                    document.getElementById('board').style.display = 'none';
+                    document.getElementById('main-title').style.display = 'none';
+                    document.getElementById('end-screen').style.display = 'flex';
+                }, 700);
+            } else {
+                // Перемешиваем оставшиеся слова
+                setTimeout(reshuffleRemaining, 700);
+            }
+        } else {
+            // Неверное совпадение
+            const leftEl = selectedLeft;
+            const rightEl = selectedRight;
+            
+            leftEl.classList.add('wrong');
+            rightEl.classList.add('wrong');
+            
+            leftEl.style.pointerEvents = 'none';
+            rightEl.style.pointerEvents = 'none';
+
+            setTimeout(() => {
+                leftEl.classList.remove('wrong', 'selected');
+                rightEl.classList.remove('wrong', 'selected');
+                leftEl.style.pointerEvents = 'auto';
+                rightEl.style.pointerEvents = 'auto';
+                
+                selectedLeft = null;
+                selectedRight = null;
+            }, 500);
+        }
+    }
+
+    function reshuffleRemaining() {
+        const leftCol = document.getElementById('col-left');
+        const rightCol = document.getElementById('col-right');
+        
+        let leftItems = Array.from(leftCol.children).filter(el => !el.classList.contains('matched'));
+        let rightItems = Array.from(rightCol.children).filter(el => !el.classList.contains('matched'));
+        
+        leftItems = shuffle(leftItems);
+        rightItems = shuffle(rightItems);
+        
+        leftCol.innerHTML = '';
+        rightCol.innerHTML = '';
+        
+        leftItems.forEach(el => {
+            el.classList.remove('matched', 'selected', 'dragging');
+            leftCol.appendChild(el);
+        });
+        rightItems.forEach(el => {
+            el.classList.remove('matched', 'selected', 'dragging');
+            rightCol.appendChild(el);
+        });
+    }
+
+    window.onload = initGame;
 </script>
 
 </body>
