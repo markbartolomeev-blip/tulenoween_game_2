@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Хэллоуинская Игра: Соедини Пары</title>
-    <!-- Шрифт Eater: рубленый и жуткий -->
-    <link href="https://fonts.googleapis.com/css2?family=Eater&display=swap" rel="stylesheet">
+    <title>Хэллоуин: Тыква в Лабиринте</title>
+    <!-- Russo One — жирный, рубленый, читаемый шрифт с поддержкой кириллицы -->
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
         * {
             box-sizing: border-box;
@@ -14,13 +14,14 @@
         }
 
         body {
-            font-family: 'Eater', sans-serif;
+            font-family: 'Russo One', sans-serif;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
             background-color: #2a0a38;
+            touch-action: none;
         }
 
         /* --- ВРАЩАЮЩИЙСЯ И РАЗМЫТЫЙ ФОН (ВОРОНКА) --- */
@@ -49,26 +50,34 @@
 
         /* --- ИГРОВОЙ КОНТЕЙНЕР --- */
         .game-container {
-            background: rgba(25, 0, 40, 0.88);
+            background: rgba(25, 0, 40, 0.9);
             padding: 25px;
             border-radius: 20px;
             box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), inset 0 0 25px rgba(242, 109, 33, 0.4);
             text-align: center;
-            max-width: 900px;
+            max-width: 700px;
             width: 95%;
             backdrop-filter: blur(6px);
             border: 3px solid #f26d21;
             z-index: 1;
-            transition: all 0.5s ease;
         }
 
-        /* Основной заголовок игры */
-        .main-title {
+        /* --- СТАРТОВЫЙ ЭКРАН --- */
+        .start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 22px;
+            padding: 20px 10px;
+            animation: fadeInEnd 0.6s ease forwards;
+        }
+
+        .start-screen h1 {
             color: #f26d21;
-            font-size: 38px;
-            margin-bottom: 25px;
+            font-size: 42px;
             text-shadow: 2px 2px 0 #572a7c, 4px 4px 0 #000;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             animation: titleGlow 3s ease-in-out infinite alternate;
         }
 
@@ -77,114 +86,97 @@
             to { text-shadow: 2px 2px 0 #572a7c, 4px 4px 0 #000, 0 0 25px #f26d21, 0 0 35px #f26d21; }
         }
 
-        /* --- СТРОГО 2 СТОЛБЦА --- */
-        .board {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            gap: 15px;
-            margin-bottom: 25px;
-            transition: opacity 0.5s ease;
+        .start-screen .subtitle {
+            color: #ccc;
+            font-size: 18px;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
         }
 
-        .column {
+        .controls-box {
+            background: rgba(87, 42, 124, 0.4);
+            border: 2px dashed #f26d21;
+            border-radius: 14px;
+            padding: 18px 25px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            flex: 1;
-            width: 50%;
+            gap: 10px;
+            max-width: 420px;
         }
 
-        /* --- СЛОВА --- */
-        .word-item {
-            background-color: #f26d21;
-            color: #fff;
-            padding: 12px 8px;
-            border-radius: 10px;
-            font-family: 'Eater', sans-serif;
+        .controls-box .ctrl-title {
+            color: #f26d21;
             font-size: 20px;
-            cursor: grab;
-            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s, border-color 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
-            border: 2px solid transparent;
-            user-select: none;
-            text-shadow: 1px 1px 2px #000;
-            word-break: break-word;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .controls-box .ctrl-line {
+            color: #fff;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+            line-height: 1.5;
+        }
+
+        .controls-box .ctrl-line span {
+            color: #f26d21;
+        }
+
+        /* --- ЛАБИРИНТ --- */
+        #maze {
+            display: none;
+            margin: 0 auto;
+            background: #1a0427;
+            border: 3px solid #f26d21;
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: 0 0 25px rgba(242, 109, 33, 0.5), inset 0 0 15px rgba(0,0,0,0.8);
+            width: fit-content;
+        }
+
+        .cell {
+            width: 22px;
+            height: 22px;
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 60px;
-            touch-action: none;
-            animation: float 4s ease-in-out infinite;
+            font-size: 16px;
         }
 
-        .word-item:nth-child(odd) { animation-delay: 0s; }
-        .word-item:nth-child(even) { animation-delay: 1s; }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-4px); }
+        .cell.wall {
+            background: #572a7c;
+            border-radius: 3px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.6);
         }
 
-        .word-item:active {
-            cursor: grabbing;
+        .cell.floor {
+            background: rgba(242, 109, 33, 0.08);
         }
 
-        .word-item:hover {
-            transform: translateY(-3px) scale(1.03);
-            background-color: #ff8c42;
-            box-shadow: 0 6px 15px rgba(242, 109, 33, 0.6);
-            animation-play-state: paused;
+        .cell.player::after {
+            content: '🎃';
+            font-size: 18px;
+            animation: pumpkinBounce 0.6s ease-in-out infinite alternate;
+            filter: drop-shadow(0 0 6px #f26d21);
         }
 
-        .word-item.dragging {
-            opacity: 0.6;
-            border: 2px dashed #fff;
-            transform: scale(1.05);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.8);
-            animation-play-state: paused;
+        @keyframes pumpkinBounce {
+            from { transform: scale(1) translateY(0); }
+            to { transform: scale(1.15) translateY(-2px); }
         }
 
-        .word-item.selected {
-            border-color: #fff;
-            transform: scale(1.05);
-            box-shadow: 0 0 20px #f26d21, 0 0 10px #fff;
-            background-color: #d95d14;
-            animation-play-state: paused;
+        .cell.exit::after {
+            content: '🌀';
+            font-size: 18px;
+            animation: portalSpin 1.5s linear infinite;
+            filter: drop-shadow(0 0 8px #f26d21);
         }
 
-        .word-item.matched {
-            background-color: #4a4a4a;
-            color: #888;
-            pointer-events: none;
-            box-shadow: none;
-            transform: scale(0.95);
-            border-color: #333;
-            text-decoration: line-through;
-            animation: pop 0.4s ease, fadeOut 0.4s ease 0.3s forwards;
-        }
-
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); background-color: #4caf50; }
-            100% { transform: scale(0.95); }
-        }
-
-        @keyframes fadeOut {
-            to { opacity: 0.5; }
-        }
-
-        .word-item.wrong {
-            background-color: #8b0000;
-            animation: shake 0.4s ease;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-8px) rotate(-2deg); }
-            40% { transform: translateX(8px) rotate(2deg); }
-            60% { transform: translateX(-6px) rotate(-1deg); }
-            80% { transform: translateX(6px) rotate(1deg); }
+        @keyframes portalSpin {
+            from { transform: rotate(0deg) scale(1); }
+            to { transform: rotate(360deg) scale(1.1); }
         }
 
         /* --- ФИНАЛЬНЫЙ ЭКРАН --- */
@@ -193,7 +185,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: 18px;
             padding: 30px 10px;
             animation: fadeInEnd 0.8s ease forwards;
         }
@@ -205,20 +197,19 @@
 
         .end-screen h1 {
             color: #f26d21;
-            font-size: 32px;
+            font-size: 34px;
             text-shadow: 2px 2px 0 #572a7c, 4px 4px 0 #000;
-            margin-bottom: 10px;
+            letter-spacing: 2px;
         }
 
         .end-screen p {
             color: #fff;
             font-size: 22px;
-            margin: 5px 0;
             text-shadow: 1px 1px 2px #000;
+            letter-spacing: 1px;
         }
 
         .end-screen p.sub-text {
-            font-style: italic;
             color: #ccc;
             font-size: 20px;
         }
@@ -226,20 +217,52 @@
         .end-screen p.final-text {
             color: #f26d21;
             font-size: 24px;
-            font-weight: bold;
             text-shadow: 1px 1px 0 #000, 0 0 10px #f26d21;
         }
 
-        /* --- АДАПТИВНОСТЬ ДЛЯ ТЕЛЕФОНОВ --- */
+        /* --- КНОПКА --- */
+        .reset-btn {
+            font-family: 'Russo One', sans-serif;
+            font-size: 18px;
+            background-color: #572a7c;
+            color: #f26d21;
+            border: 3px solid #f26d21;
+            padding: 12px 28px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 1px 1px 0 #000;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        .reset-btn:hover {
+            background-color: #f26d21;
+            color: #572a7c;
+            border-color: #572a7c;
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 5px 20px rgba(242, 109, 33, 0.7);
+        }
+
+        .reset-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* --- АДАПТИВНОСТЬ --- */
         @media (max-width: 600px) {
-            .main-title { font-size: 24px; margin-bottom: 15px; }
-            .game-container { padding: 15px; }
-            .word-item { font-size: 14px; padding: 8px 4px; min-height: 50px; }
-            .board { gap: 8px; }
-            .column { gap: 8px; }
+            .start-screen h1 { font-size: 26px; }
+            .start-screen .subtitle { font-size: 14px; }
+            .controls-box { padding: 14px 16px; }
+            .controls-box .ctrl-title { font-size: 16px; }
+            .controls-box .ctrl-line { font-size: 13px; }
+            .game-container { padding: 12px; }
+            .cell { width: 14px; height: 14px; font-size: 11px; }
+            .cell.player::after { font-size: 13px; }
+            .cell.exit::after { font-size: 13px; }
             .end-screen h1 { font-size: 22px; }
             .end-screen p { font-size: 16px; }
             .end-screen p.final-text { font-size: 18px; }
+            .reset-btn { font-size: 14px; padding: 10px 20px; }
         }
     </style>
 </head>
@@ -248,234 +271,183 @@
 <div id="bg-spiral"></div>
 
 <div class="game-container">
-    <!-- Основной заголовок (скрывается в конце) -->
-    <h1 class="main-title" id="main-title">Соедини Пары</h1>
-    
-    <!-- Игровое поле (скрывается в конце) -->
-    <div class="board" id="board">
-        <div class="column" id="col-left"></div>
-        <div class="column" id="col-right"></div>
+
+    <!-- СТАРТОВЫЙ ЭКРАН -->
+    <div class="start-screen" id="start-screen">
+        <h1>Тыква в лабиринте</h1>
+        <p class="subtitle">Проведи тыкву через лабиринт к порталу</p>
+        
+        <div class="controls-box">
+            <div class="ctrl-title">УПРАВЛЕНИЕ</div>
+            <div class="ctrl-line"><span>Клавиатура:</span> стрелки ← ↑ ↓ → или WASD</div>
+            <div class="ctrl-line"><span>Телефон:</span> свайпы по экрану</div>
+            <div class="ctrl-line"><span>Цель:</span> довести 🎃 до 🌀</div>
+        </div>
+
+        <button class="reset-btn" onclick="startGame()">Войти в лабиринт</button>
     </div>
 
-    <!-- Финальный экран (без кнопки) -->
+    <!-- ЛАБИРИНТ (появляется после старта) -->
+    <div id="maze"></div>
+
+    <!-- ФИНАЛЬНЫЙ ЭКРАН -->
     <div class="end-screen" id="end-screen">
         <h1>ТЫ ВЫПОЛНИЛ(-А) СВОЕ ЗАДАНИЕ!</h1>
         <p class="sub-text">можешь спать спокойно... Пока...</p>
         <p class="final-text">Не забудь отправить скрин в группу!</p>
     </div>
+
 </div>
 
 <script>
-    const pairs = [
-        { id: 1, left: "заколдовать", right: "тюленя" },
-        { id: 2, left: "сварить", right: "зелье" },
-        { id: 3, left: "узреть", right: "книгу" },
-        { id: 4, left: "обратить", right: "тыкву" },
-        { id: 5, left: "прийти на", right: "кладбище" },
-        { id: 6, left: "убрать", right: "могилу" },
-        { id: 7, left: "вырезать", right: "фонарь Джека" },
-        { id: 8, left: "испугаться", right: "призрака" },
-        { id: 9, left: "съесть", right: "мозги" },
-        { id: 10, left: "собрать", right: "конфеты" }
-    ];
+    // ===== НАСТРОЙКИ ЛАБИРИНТА =====
+    const COLS = 21;
+    const ROWS = 21;
 
-    let selectedLeft = null;
-    let selectedRight = null;
-    let matchesCount = 0;
+    let maze = [];
+    let player = { x: 1, y: 1 };
+    let exitPos = { x: COLS - 2, y: ROWS - 2 };
+    let gameActive = false;
 
-    function shuffle(array) {
-        const newArray = [...array];
-        for (let i = newArray.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-        }
-        return newArray;
-    }
+    // ===== ГЕНЕРАЦИЯ ЛАБИРИНТА (Recursive Backtracker) =====
+    function generateMaze() {
+        maze = Array.from({ length: ROWS }, () => Array(COLS).fill(true));
 
-    function initGame() {
-        const leftCol = document.getElementById('col-left');
-        const rightCol = document.getElementById('col-right');
-        const mainTitle = document.getElementById('main-title');
-        const board = document.getElementById('board');
-        const endScreen = document.getElementById('end-screen');
-        
-        mainTitle.style.display = 'block';
-        board.style.display = 'flex';
-        endScreen.style.display = 'none';
-        
-        leftCol.innerHTML = '';
-        rightCol.innerHTML = '';
-        
-        selectedLeft = null;
-        selectedRight = null;
-        matchesCount = 0;
+        const stack = [];
+        maze[1][1] = false;
+        stack.push({ x: 1, y: 1 });
 
-        let leftWords = pairs.map(p => ({ id: p.id, text: p.left }));
-        let rightWords = pairs.map(p => ({ id: p.id, text: p.right }));
+        const dirs = [
+            { dx: 0, dy: -2 },
+            { dx: 0, dy: 2 },
+            { dx: -2, dy: 0 },
+            { dx: 2, dy: 0 }
+        ];
 
-        leftWords = shuffle(leftWords);
-        rightWords = shuffle(rightWords);
+        while (stack.length > 0) {
+            const current = stack[stack.length - 1];
+            const neighbors = [];
 
-        function createWordElement(wordObj, columnType) {
-            const div = document.createElement('div');
-            div.classList.add('word-item');
-            div.textContent = wordObj.text;
-            div.dataset.id = wordObj.id;
-            div.dataset.column = columnType;
-            div.setAttribute('draggable', 'true');
-            
-            div.addEventListener('click', () => handleWordClick(div));
-            
-            div.addEventListener('dragstart', handleDragStart);
-            div.addEventListener('dragover', handleDragOver);
-            div.addEventListener('drop', handleDrop);
-            div.addEventListener('dragend', handleDragEnd);
-            
-            return div;
-        }
-
-        leftWords.forEach(word => leftCol.appendChild(createWordElement(word, 'left')));
-        rightWords.forEach(word => rightCol.appendChild(createWordElement(word, 'right')));
-    }
-
-    // --- ЛОГИКА DRAG & DROP ---
-    let draggedElement = null;
-
-    function handleDragStart(e) {
-        draggedElement = this;
-        this.classList.add('dragging');
-        e.dataTransfer.setData('text/plain', this.textContent);
-        e.dataTransfer.effectAllowed = 'move';
-    }
-
-    function handleDragOver(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-    }
-
-    function handleDrop(e) {
-        e.preventDefault();
-        const target = e.target.closest('.word-item');
-        
-        if (draggedElement && target && draggedElement !== target && draggedElement.dataset.column === target.dataset.column) {
-            const tempText = draggedElement.textContent;
-            const tempId = draggedElement.dataset.id;
-            
-            draggedElement.textContent = target.textContent;
-            draggedElement.dataset.id = target.dataset.id;
-            
-            target.textContent = tempText;
-            target.dataset.id = tempId;
-        }
-    }
-
-    function handleDragEnd() {
-        this.classList.remove('dragging');
-        draggedElement = null;
-    }
-
-    // --- ЛОГИКА ВЫБОРА И СОВПАДЕНИЯ ---
-    function handleWordClick(element) {
-        if (element.classList.contains('matched') || element.classList.contains('dragging')) return;
-
-        const column = element.dataset.column;
-
-        if (element.classList.contains('selected')) {
-            element.classList.remove('selected');
-            if (column === 'left') selectedLeft = null;
-            if (column === 'right') selectedRight = null;
-            return;
-        }
-
-        if (column === 'left') {
-            if (selectedLeft) selectedLeft.classList.remove('selected');
-            selectedLeft = element;
-        } else {
-            if (selectedRight) selectedRight.classList.remove('selected');
-            selectedRight = element;
-        }
-        
-        element.classList.add('selected');
-
-        if (selectedLeft && selectedRight) {
-            checkMatch();
-        }
-    }
-
-    function checkMatch() {
-        const idLeft = selectedLeft.dataset.id;
-        const idRight = selectedRight.dataset.id;
-
-        if (idLeft === idRight) {
-            // Верное совпадение
-            selectedLeft.classList.remove('selected');
-            selectedRight.classList.remove('selected');
-            
-            selectedLeft.classList.add('matched');
-            selectedRight.classList.add('matched');
-            
-            selectedLeft = null;
-            selectedRight = null;
-            matchesCount++;
-
-            if (matchesCount === pairs.length) {
-                // Победа! Показываем финальный экран
-                setTimeout(() => {
-                    document.getElementById('board').style.display = 'none';
-                    document.getElementById('main-title').style.display = 'none';
-                    document.getElementById('end-screen').style.display = 'flex';
-                }, 700);
-            } else {
-                // Перемешиваем оставшиеся слова
-                setTimeout(reshuffleRemaining, 700);
+            for (const d of dirs) {
+                const nx = current.x + d.dx;
+                const ny = current.y + d.dy;
+                if (nx > 0 && nx < COLS - 1 && ny > 0 && ny < ROWS - 1 && maze[ny][nx]) {
+                    neighbors.push({ x: nx, y: ny, dx: d.dx, dy: d.dy });
+                }
             }
-        } else {
-            // Неверное совпадение
-            const leftEl = selectedLeft;
-            const rightEl = selectedRight;
-            
-            leftEl.classList.add('wrong');
-            rightEl.classList.add('wrong');
-            
-            leftEl.style.pointerEvents = 'none';
-            rightEl.style.pointerEvents = 'none';
 
-            setTimeout(() => {
-                leftEl.classList.remove('wrong', 'selected');
-                rightEl.classList.remove('wrong', 'selected');
-                leftEl.style.pointerEvents = 'auto';
-                rightEl.style.pointerEvents = 'auto';
-                
-                selectedLeft = null;
-                selectedRight = null;
-            }, 500);
+            if (neighbors.length > 0) {
+                const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                maze[current.y + next.dy / 2][current.x + next.dx / 2] = false;
+                maze[next.y][next.x] = false;
+                stack.push({ x: next.x, y: next.y });
+            } else {
+                stack.pop();
+            }
+        }
+
+        maze[exitPos.y][exitPos.x] = false;
+    }
+
+    // ===== ОТРИСОВКА =====
+    function renderMaze() {
+        const mazeEl = document.getElementById('maze');
+        mazeEl.style.gridTemplateColumns = `repeat(${COLS}, auto)`;
+        mazeEl.innerHTML = '';
+
+        for (let y = 0; y < ROWS; y++) {
+            for (let x = 0; x < COLS; x++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                if (maze[y][x]) {
+                    cell.classList.add('wall');
+                } else {
+                    cell.classList.add('floor');
+                }
+                if (x === player.x && y === player.y) {
+                    cell.classList.add('player');
+                }
+                if (x === exitPos.x && y === exitPos.y) {
+                    cell.classList.add('exit');
+                }
+                mazeEl.appendChild(cell);
+            }
         }
     }
 
-    function reshuffleRemaining() {
-        const leftCol = document.getElementById('col-left');
-        const rightCol = document.getElementById('col-right');
-        
-        let leftItems = Array.from(leftCol.children).filter(el => !el.classList.contains('matched'));
-        let rightItems = Array.from(rightCol.children).filter(el => !el.classList.contains('matched'));
-        
-        leftItems = shuffle(leftItems);
-        rightItems = shuffle(rightItems);
-        
-        leftCol.innerHTML = '';
-        rightCol.innerHTML = '';
-        
-        leftItems.forEach(el => {
-            el.classList.remove('matched', 'selected', 'dragging');
-            leftCol.appendChild(el);
-        });
-        rightItems.forEach(el => {
-            el.classList.remove('matched', 'selected', 'dragging');
-            rightCol.appendChild(el);
-        });
+    // ===== ДВИЖЕНИЕ =====
+    function tryMove(dx, dy) {
+        if (!gameActive) return;
+        const nx = player.x + dx;
+        const ny = player.y + dy;
+        if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) return;
+        if (maze[ny][nx]) return;
+        player.x = nx;
+        player.y = ny;
+        renderMaze();
+
+        if (player.x === exitPos.x && player.y === exitPos.y) {
+            winGame();
+        }
     }
 
-    window.onload = initGame;
+    function winGame() {
+        gameActive = false;
+        setTimeout(() => {
+            document.getElementById('maze').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'flex';
+        }, 300);
+    }
+
+    // ===== УПРАВЛЕНИЕ =====
+    document.addEventListener('keydown', (e) => {
+        switch (e.key) {
+            case 'ArrowUp': case 'w': case 'W': case 'ц': case 'Ц': tryMove(0, -1); break;
+            case 'ArrowDown': case 's': case 'S': case 'ы': case 'Ы': tryMove(0, 1); break;
+            case 'ArrowLeft': case 'a': case 'A': case 'ф': case 'Ф': tryMove(-1, 0); break;
+            case 'ArrowRight': case 'd': case 'D': case 'в': case 'В': tryMove(1, 0); break;
+        }
+    });
+
+    // Свайпы
+    let touchStartX = 0, touchStartY = 0;
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        const absDx = Math.abs(dx);
+        const absDy = Math.abs(dy);
+        if (Math.max(absDx, absDy) < 25) return;
+        if (absDx > absDy) {
+            tryMove(dx > 0 ? 1 : -1, 0);
+        } else {
+            tryMove(0, dy > 0 ? 1 : -1);
+        }
+    }, { passive: true });
+
+    // ===== СТАРТ ИГРЫ =====
+    function startGame() {
+        player = { x: 1, y: 1 };
+        exitPos = { x: COLS - 2, y: ROWS - 2 };
+        generateMaze();
+        renderMaze();
+        gameActive = true;
+
+        // Скрываем стартовый экран, показываем лабиринт
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('end-screen').style.display = 'none';
+        document.getElementById('maze').style.display = 'grid';
+    }
+
+    // При загрузке показываем стартовый экран, лабиринт скрыт
+    window.onload = () => {
+        document.getElementById('maze').style.display = 'none';
+        document.getElementById('end-screen').style.display = 'none';
+    };
 </script>
 
 </body>
