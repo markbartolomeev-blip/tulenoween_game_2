@@ -3,15 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Хэллоуин: Тыква в Лабиринте</title>
-    <!-- Russo One — жирный, рубленый, читаемый шрифт с поддержкой кириллицы -->
+    <title>Хэллоуин: Поймай Монстра</title>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Russo One', sans-serif;
@@ -21,248 +16,317 @@
             align-items: center;
             overflow: hidden;
             background-color: #2a0a38;
-            touch-action: none;
+            touch-action: manipulation;
         }
 
-        /* --- ВРАЩАЮЩИЙСЯ И РАЗМЫТЫЙ ФОН (ВОРОНКА) --- */
         #bg-spiral {
             position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
             background: repeating-radial-gradient(
                 circle at center,
-                #f26d21 0px,
-                #f26d21 60px,
-                #572a7c 60px,
-                #572a7c 120px
+                #f26d21 0px, #f26d21 60px,
+                #572a7c 60px, #572a7c 120px
             );
             animation: spin 25s linear infinite;
             filter: blur(12px);
             z-index: -1;
         }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
-        /* --- ИГРОВОЙ КОНТЕЙНЕР --- */
         .game-container {
-            background: rgba(25, 0, 40, 0.9);
-            padding: 25px;
+            background: rgba(25, 0, 40, 0.92);
+            padding: 16px;
             border-radius: 20px;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), inset 0 0 25px rgba(242, 109, 33, 0.4);
+            box-shadow: 0 0 50px rgba(0,0,0,0.9), inset 0 0 25px rgba(242,109,33,0.4);
             text-align: center;
-            max-width: 700px;
-            width: 95%;
+            max-width: 560px;
+            width: 96%;
             backdrop-filter: blur(6px);
             border: 3px solid #f26d21;
             z-index: 1;
         }
 
-        /* --- СТАРТОВЫЙ ЭКРАН --- */
+        /* СТАРТОВЫЙ ЭКРАН */
         .start-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 22px;
-            padding: 20px 10px;
-            animation: fadeInEnd 0.6s ease forwards;
+            display: flex; flex-direction: column; align-items: center;
+            gap: 16px; padding: 12px 8px;
+            animation: fadeIn 0.6s ease forwards;
         }
-
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
         .start-screen h1 {
-            color: #f26d21;
-            font-size: 42px;
+            color: #f26d21; font-size: 30px;
             text-shadow: 2px 2px 0 #572a7c, 4px 4px 0 #000;
             letter-spacing: 2px;
+            text-align: center;
             animation: titleGlow 3s ease-in-out infinite alternate;
         }
-
         @keyframes titleGlow {
             from { text-shadow: 2px 2px 0 #572a7c, 4px 4px 0 #000, 0 0 10px #f26d21; }
             to { text-shadow: 2px 2px 0 #572a7c, 4px 4px 0 #000, 0 0 25px #f26d21, 0 0 35px #f26d21; }
         }
-
-        .start-screen .subtitle {
-            color: #ccc;
-            font-size: 18px;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-        }
+        .subtitle { color: #ccc; font-size: 14px; letter-spacing: 1px; text-align: center; }
 
         .controls-box {
             background: rgba(87, 42, 124, 0.4);
             border: 2px dashed #f26d21;
             border-radius: 14px;
-            padding: 18px 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-width: 420px;
+            padding: 14px 18px;
+            display: flex; flex-direction: column; gap: 6px;
+            max-width: 480px;
+            text-align: left;
         }
-
         .controls-box .ctrl-title {
-            color: #f26d21;
-            font-size: 20px;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
+            color: #f26d21; font-size: 15px;
+            letter-spacing: 1px; margin-bottom: 4px;
             text-shadow: 1px 1px 0 #000;
+            text-align: center;
         }
-
         .controls-box .ctrl-line {
-            color: #fff;
-            font-size: 16px;
-            letter-spacing: 0.5px;
-            line-height: 1.5;
+            color: #fff; font-size: 12px;
+            line-height: 1.6; letter-spacing: 0.5px;
         }
+        .controls-box .ctrl-line span { color: #f26d21; }
 
-        .controls-box .ctrl-line span {
-            color: #f26d21;
-        }
-
-        /* --- ЛАБИРИНТ --- */
-        #maze {
-            display: none;
-            margin: 0 auto;
-            background: #1a0427;
-            border: 3px solid #f26d21;
-            border-radius: 12px;
-            padding: 6px;
-            box-shadow: 0 0 25px rgba(242, 109, 33, 0.5), inset 0 0 15px rgba(0,0,0,0.8);
-            width: fit-content;
-        }
-
-        .cell {
-            width: 22px;
-            height: 22px;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-        }
-
-        .cell.wall {
-            background: #572a7c;
-            border-radius: 3px;
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.6);
-        }
-
-        .cell.floor {
-            background: rgba(242, 109, 33, 0.08);
-        }
-
-        .cell.player::after {
-            content: '🎃';
-            font-size: 18px;
-            animation: pumpkinBounce 0.6s ease-in-out infinite alternate;
-            filter: drop-shadow(0 0 6px #f26d21);
-        }
-
-        @keyframes pumpkinBounce {
-            from { transform: scale(1) translateY(0); }
-            to { transform: scale(1.15) translateY(-2px); }
-        }
-
-        .cell.exit::after {
-            content: '🌀';
-            font-size: 18px;
-            animation: portalSpin 1.5s linear infinite;
-            filter: drop-shadow(0 0 8px #f26d21);
-        }
-
-        @keyframes portalSpin {
-            from { transform: rotate(0deg) scale(1); }
-            to { transform: rotate(360deg) scale(1.1); }
-        }
-
-        /* --- ФИНАЛЬНЫЙ ЭКРАН --- */
-        .end-screen {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 18px;
-            padding: 30px 10px;
-            animation: fadeInEnd 0.8s ease forwards;
-        }
-
-        @keyframes fadeInEnd {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .end-screen h1 {
-            color: #f26d21;
-            font-size: 34px;
-            text-shadow: 2px 2px 0 #572a7c, 4px 4px 0 #000;
-            letter-spacing: 2px;
-        }
-
-        .end-screen p {
-            color: #fff;
-            font-size: 22px;
-            text-shadow: 1px 1px 2px #000;
-            letter-spacing: 1px;
-        }
-
-        .end-screen p.sub-text {
-            color: #ccc;
-            font-size: 20px;
-        }
-
-        .end-screen p.final-text {
-            color: #f26d21;
-            font-size: 24px;
-            text-shadow: 1px 1px 0 #000, 0 0 10px #f26d21;
-        }
-
-        /* --- КНОПКА --- */
-        .reset-btn {
+        .btn {
             font-family: 'Russo One', sans-serif;
-            font-size: 18px;
+            font-size: 16px;
             background-color: #572a7c;
             color: #f26d21;
             border: 3px solid #f26d21;
-            padding: 12px 28px;
+            padding: 12px 26px;
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
             text-shadow: 1px 1px 0 #000;
             letter-spacing: 1px;
-            margin-top: 5px;
         }
-
-        .reset-btn:hover {
-            background-color: #f26d21;
-            color: #572a7c;
+        .btn:hover {
+            background-color: #f26d21; color: #572a7c;
             border-color: #572a7c;
             transform: scale(1.08) translateY(-2px);
-            box-shadow: 0 5px 20px rgba(242, 109, 33, 0.7);
+            box-shadow: 0 5px 20px rgba(242,109,33,0.7);
+        }
+        .btn:active { transform: scale(0.95); }
+
+        /* ИГРОВОЕ ПОЛЕ */
+        .game-area {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            animation: fadeIn 0.5s ease forwards;
         }
 
-        .reset-btn:active {
-            transform: scale(0.95);
+        .top-info {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+            font-size: 12px;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+        .info-item {
+            background: rgba(87,42,124,0.5);
+            border: 2px solid rgba(242,109,33,0.5);
+            border-radius: 10px;
+            padding: 5px 8px;
+            flex: 1;
+            text-align: center;
+        }
+        .info-item b { color: #f26d21; }
+
+        .info-item.miss b { color: #ff5555; }
+        .info-item.miss.danger {
+            border-color: #ff3333;
+            animation: missPulse 0.8s infinite alternate;
+        }
+        @keyframes missPulse {
+            from { box-shadow: 0 0 0 rgba(255,51,51,0.4); }
+            to { box-shadow: 0 0 15px rgba(255,51,51,0.9); }
         }
 
-        /* --- АДАПТИВНОСТЬ --- */
+        /* Таймер-полоска */
+        .timer-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(87,42,124,0.5);
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid rgba(242,109,33,0.4);
+        }
+        .timer-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #f26d21, #ff8c42);
+            transition: width 1s linear;
+            box-shadow: 0 0 10px #f26d21;
+        }
+        .timer-fill.danger {
+            background: linear-gradient(90deg, #ff3333, #ff5555);
+            animation: pulse 0.5s infinite alternate;
+        }
+        @keyframes pulse {
+            from { opacity: 1; }
+            to { opacity: 0.6; }
+        }
+
+        /* Сетка лунок 4x4 */
+        .holes-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 8px;
+            background: rgba(15, 2, 25, 0.85);
+            border: 3px solid #f26d21;
+            border-radius: 16px;
+            padding: 10px;
+            box-shadow: inset 0 0 25px rgba(242,109,33,0.25);
+        }
+
+        .hole {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            background: radial-gradient(ellipse at center, #2a0a38 0%, #150220 100%);
+            border-radius: 50%;
+            border: 3px solid #572a7c;
+            box-shadow: inset 0 6px 12px rgba(0,0,0,0.9), 0 0 10px rgba(87,42,124,0.6);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+        .hole::before {
+            content: '🪦';
+            position: absolute;
+            bottom: -6px;
+            font-size: 18px;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* Существо */
+        .creature {
+            font-size: 30px;
+            line-height: 1;
+            cursor: pointer;
+            user-select: none;
+            transform: translateY(50px);
+            transition: transform 0.2s ease;
+            filter: drop-shadow(0 0 6px rgba(242,109,33,0.7));
+        }
+        .creature.show {
+            transform: translateY(0);
+            animation: wiggle 0.6s ease-in-out infinite alternate;
+        }
+        @keyframes wiggle {
+            from { transform: translateY(0) rotate(-5deg); }
+            to { transform: translateY(-3px) rotate(5deg); }
+        }
+
+        .creature.caught {
+            animation: caughtAnim 0.3s ease forwards;
+        }
+        @keyframes caughtAnim {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        /* Всплывающие +1 и промах */
+        .plus-one {
+            position: absolute;
+            color: #4caf50;
+            font-family: 'Russo One', sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: plusOne 0.6s ease-out forwards;
+            text-shadow: 0 0 8px #4caf50;
+            z-index: 10;
+        }
+        @keyframes plusOne {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        .miss-mark {
+            position: absolute;
+            color: #ff5555;
+            font-family: 'Russo One', sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: missAnim 0.6s ease-out forwards;
+            text-shadow: 0 0 8px #ff5555;
+            z-index: 10;
+        }
+        @keyframes missAnim {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        /* ФИНАЛЬНЫЙ ЭКРАН */
+        .end-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            padding: 22px 10px;
+            animation: fadeIn 0.8s ease forwards;
+        }
+        .end-screen h1 {
+            color: #f26d21; font-size: 24px;
+            text-shadow: 2px 2px 0 #572a7c, 4px 4px 0 #000;
+            letter-spacing: 1px;
+            text-align: center;
+            line-height: 1.3;
+        }
+        .end-screen h1.lose {
+            color: #ff5555;
+            text-shadow: 2px 2px 0 #572a7c, 4px 4px 0 #000, 0 0 15px #ff5555;
+        }
+        .end-screen p {
+            color: #fff; font-size: 16px;
+            text-shadow: 1px 1px 2px #000;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+        .end-screen p.sub-text { color: #ccc; font-size: 14px; }
+        .end-screen p.final-text {
+            color: #f26d21; font-size: 18px;
+            text-shadow: 1px 1px 0 #000, 0 0 10px #f26d21;
+        }
+        .end-screen .score-big {
+            color: #f26d21;
+            font-size: 38px;
+            text-shadow: 0 0 20px #f26d21, 2px 2px 0 #000;
+            margin: 4px 0;
+        }
+
+        /* АДАПТИВ */
         @media (max-width: 600px) {
-            .start-screen h1 { font-size: 26px; }
-            .start-screen .subtitle { font-size: 14px; }
-            .controls-box { padding: 14px 16px; }
-            .controls-box .ctrl-title { font-size: 16px; }
-            .controls-box .ctrl-line { font-size: 13px; }
-            .game-container { padding: 12px; }
-            .cell { width: 14px; height: 14px; font-size: 11px; }
-            .cell.player::after { font-size: 13px; }
-            .cell.exit::after { font-size: 13px; }
-            .end-screen h1 { font-size: 22px; }
-            .end-screen p { font-size: 16px; }
-            .end-screen p.final-text { font-size: 18px; }
-            .reset-btn { font-size: 14px; padding: 10px 20px; }
+            .start-screen h1 { font-size: 20px; }
+            .subtitle { font-size: 11px; }
+            .controls-box { padding: 10px 12px; }
+            .controls-box .ctrl-title { font-size: 12px; }
+            .controls-box .ctrl-line { font-size: 10px; }
+            .btn { font-size: 13px; padding: 10px 18px; }
+            .creature { font-size: 22px; }
+            .hole::before { font-size: 14px; }
+            .top-info { font-size: 10px; }
+            .info-item { padding: 3px 5px; }
+            .end-screen h1 { font-size: 17px; }
+            .end-screen p { font-size: 13px; }
+            .end-screen p.final-text { font-size: 14px; }
+            .end-screen .score-big { font-size: 30px; }
         }
     </style>
 </head>
@@ -274,178 +338,296 @@
 
     <!-- СТАРТОВЫЙ ЭКРАН -->
     <div class="start-screen" id="start-screen">
-        <h1>Тыква в лабиринте</h1>
-        <p class="subtitle">Проведи тыкву через лабиринт к порталу</p>
-        
+        <h1>Поймай Монстра</h1>
+        <p class="subtitle">Продержись 60 секунд и не пропусти больше 14</p>
         <div class="controls-box">
-            <div class="ctrl-title">УПРАВЛЕНИЕ</div>
-            <div class="ctrl-line"><span>Клавиатура:</span> стрелки ← ↑ ↓ → или WASD</div>
-            <div class="ctrl-line"><span>Телефон:</span> свайпы по экрану</div>
-            <div class="ctrl-line"><span>Цель:</span> довести 🎃 до 🌀</div>
+            <div class="ctrl-title">ПРАВИЛА</div>
+            <div class="ctrl-line"><span>1.</span> Из могил выскакивают 🎃👻🧟‍♂️💀</div>
+            <div class="ctrl-line"><span>2.</span> Кликай/тапай по ним, пока не спрятались (2 сек)</div>
+            <div class="ctrl-line"><span>3.</span> Каждые 10 сек существ становится на 2 больше</div>
+            <div class="ctrl-line"><span>4.</span> Пропустил существо — счётчик непойманных +1</div>
+            <div class="ctrl-line"><span>5.</span> Дошёл до 15 непойманных — игра сначала</div>
+            <div class="ctrl-line"><span>Цель:</span> продержаться 1 минуту</div>
         </div>
-
-        <button class="reset-btn" onclick="startGame()">Войти в лабиринт</button>
+        <button class="btn" onclick="startGame()">Начать игру</button>
     </div>
 
-    <!-- ЛАБИРИНТ (появляется после старта) -->
-    <div id="maze"></div>
+    <!-- ИГРОВОЕ ПОЛЕ -->
+    <div class="game-area" id="game-area">
+        <div class="top-info">
+            <div class="info-item">Время: <b><span id="time-left">60</span>с</b></div>
+            <div class="info-item">Поймано: <b><span id="score">0</span></b></div>
+            <div class="info-item miss" id="miss-item">Пропущено: <b><span id="misses">0</span></b>/15</div>
+        </div>
+
+        <div class="timer-bar">
+            <div class="timer-fill" id="timer-fill"></div>
+        </div>
+
+        <div class="holes-grid" id="holes-grid"></div>
+    </div>
 
     <!-- ФИНАЛЬНЫЙ ЭКРАН -->
     <div class="end-screen" id="end-screen">
-        <h1>ТЫ ВЫПОЛНИЛ(-А) СВОЕ ЗАДАНИЕ!</h1>
-        <p class="sub-text">можешь спать спокойно... Пока...</p>
-        <p class="final-text">Не забудь отправить скрин в группу!</p>
+        <h1 id="end-title">ПОЗДРАВЛЯЕМ, ТЫ ПРОШЁЛ (-А) ЗАДАНИЕ «ПОЙМАЙ МОНСТРА»!</h1>
+        <p class="sub-text" id="end-sub">можешь спать спокойно... Пока...</p>
+        <div class="score-big" id="final-score">0</div>
+        <p class="final-text" id="end-final">Не забудь отправить скрин в группу!</p>
     </div>
 
 </div>
 
 <script>
-    // ===== НАСТРОЙКИ ЛАБИРИНТА =====
-    const COLS = 21;
-    const ROWS = 21;
+    // ===== ПАРАМЕТРЫ =====
+    const EMOJIS = ['🎃', '👻', '🧟‍♂️', '💀'];
+    const COLS = 4;
+    const ROWS = 4;
+    const HOLES = COLS * ROWS;       // 16
+    const GAME_DURATION = 60;
+    const CREATURE_LIFETIME = 2000;  // 2 сек
+    const SPAWN_INTERVAL = 2000;     // каждые 2 сек
+    const RAMP_INTERVAL = 10;        // каждые 10 сек
+    const RAMP_AMOUNT = 2;           // +2
+    const MAX_MISSES = 15;           // порог проигрыша
 
-    let maze = [];
-    let player = { x: 1, y: 1 };
-    let exitPos = { x: COLS - 2, y: ROWS - 2 };
+    let score = 0;
+    let misses = 0;
+    let timeLeft = GAME_DURATION;
+    let activeCount = 1;
     let gameActive = false;
+    let elapsedSeconds = 0;
+    let gameTimer = null;
+    let spawnTimer = null;
+    let creatureTimers = [];
+    let holeState = Array(HOLES).fill(null);
 
-    // ===== ГЕНЕРАЦИЯ ЛАБИРИНТА (Recursive Backtracker) =====
-    function generateMaze() {
-        maze = Array.from({ length: ROWS }, () => Array(COLS).fill(true));
-
-        const stack = [];
-        maze[1][1] = false;
-        stack.push({ x: 1, y: 1 });
-
-        const dirs = [
-            { dx: 0, dy: -2 },
-            { dx: 0, dy: 2 },
-            { dx: -2, dy: 0 },
-            { dx: 2, dy: 0 }
-        ];
-
-        while (stack.length > 0) {
-            const current = stack[stack.length - 1];
-            const neighbors = [];
-
-            for (const d of dirs) {
-                const nx = current.x + d.dx;
-                const ny = current.y + d.dy;
-                if (nx > 0 && nx < COLS - 1 && ny > 0 && ny < ROWS - 1 && maze[ny][nx]) {
-                    neighbors.push({ x: nx, y: ny, dx: d.dx, dy: d.dy });
-                }
-            }
-
-            if (neighbors.length > 0) {
-                const next = neighbors[Math.floor(Math.random() * neighbors.length)];
-                maze[current.y + next.dy / 2][current.x + next.dx / 2] = false;
-                maze[next.y][next.x] = false;
-                stack.push({ x: next.x, y: next.y });
-            } else {
-                stack.pop();
-            }
-        }
-
-        maze[exitPos.y][exitPos.x] = false;
-    }
-
-    // ===== ОТРИСОВКА =====
-    function renderMaze() {
-        const mazeEl = document.getElementById('maze');
-        mazeEl.style.gridTemplateColumns = `repeat(${COLS}, auto)`;
-        mazeEl.innerHTML = '';
-
-        for (let y = 0; y < ROWS; y++) {
-            for (let x = 0; x < COLS; x++) {
-                const cell = document.createElement('div');
-                cell.classList.add('cell');
-                if (maze[y][x]) {
-                    cell.classList.add('wall');
-                } else {
-                    cell.classList.add('floor');
-                }
-                if (x === player.x && y === player.y) {
-                    cell.classList.add('player');
-                }
-                if (x === exitPos.x && y === exitPos.y) {
-                    cell.classList.add('exit');
-                }
-                mazeEl.appendChild(cell);
-            }
-        }
-    }
-
-    // ===== ДВИЖЕНИЕ =====
-    function tryMove(dx, dy) {
-        if (!gameActive) return;
-        const nx = player.x + dx;
-        const ny = player.y + dy;
-        if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) return;
-        if (maze[ny][nx]) return;
-        player.x = nx;
-        player.y = ny;
-        renderMaze();
-
-        if (player.x === exitPos.x && player.y === exitPos.y) {
-            winGame();
-        }
-    }
-
-    function winGame() {
-        gameActive = false;
-        setTimeout(() => {
-            document.getElementById('maze').style.display = 'none';
-            document.getElementById('end-screen').style.display = 'flex';
-        }, 300);
-    }
-
-    // ===== УПРАВЛЕНИЕ =====
-    document.addEventListener('keydown', (e) => {
-        switch (e.key) {
-            case 'ArrowUp': case 'w': case 'W': case 'ц': case 'Ц': tryMove(0, -1); break;
-            case 'ArrowDown': case 's': case 'S': case 'ы': case 'Ы': tryMove(0, 1); break;
-            case 'ArrowLeft': case 'a': case 'A': case 'ф': case 'Ф': tryMove(-1, 0); break;
-            case 'ArrowRight': case 'd': case 'D': case 'в': case 'В': tryMove(1, 0); break;
-        }
-    });
-
-    // Свайпы
-    let touchStartX = 0, touchStartY = 0;
-    document.addEventListener('touchstart', (e) => {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    document.addEventListener('touchend', (e) => {
-        const dx = e.changedTouches[0].clientX - touchStartX;
-        const dy = e.changedTouches[0].clientY - touchStartY;
-        const absDx = Math.abs(dx);
-        const absDy = Math.abs(dy);
-        if (Math.max(absDx, absDy) < 25) return;
-        if (absDx > absDy) {
-            tryMove(dx > 0 ? 1 : -1, 0);
-        } else {
-            tryMove(0, dy > 0 ? 1 : -1);
-        }
-    }, { passive: true });
-
-    // ===== СТАРТ ИГРЫ =====
+    // ===== СТАРТ =====
     function startGame() {
-        player = { x: 1, y: 1 };
-        exitPos = { x: COLS - 2, y: ROWS - 2 };
-        generateMaze();
-        renderMaze();
+        score = 0;
+        misses = 0;
+        timeLeft = GAME_DURATION;
+        activeCount = 1;
+        elapsedSeconds = 0;
         gameActive = true;
+        holeState = Array(HOLES).fill(null);
+        creatureTimers.forEach(t => clearTimeout(t.timer));
+        creatureTimers = [];
 
-        // Скрываем стартовый экран, показываем лабиринт
+        document.getElementById('score').textContent = '0';
+        document.getElementById('misses').textContent = '0';
+        document.getElementById('time-left').textContent = GAME_DURATION;
+        document.getElementById('timer-fill').style.width = '100%';
+        document.getElementById('timer-fill').classList.remove('danger');
+        document.getElementById('miss-item').classList.remove('danger');
+
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('end-screen').style.display = 'none';
-        document.getElementById('maze').style.display = 'grid';
+        document.getElementById('end-title').classList.remove('lose');
+        document.getElementById('game-area').style.display = 'flex';
+
+        buildHoles();
+        startTimers();
     }
 
-    // При загрузке показываем стартовый экран, лабиринт скрыт
+    // ===== ЛУНКИ =====
+    function buildHoles() {
+        const grid = document.getElementById('holes-grid');
+        grid.innerHTML = '';
+        for (let i = 0; i < HOLES; i++) {
+            const hole = document.createElement('div');
+            hole.classList.add('hole');
+            hole.dataset.index = i;
+            hole.addEventListener('click', (e) => handleHoleClick(i, e));
+            grid.appendChild(hole);
+        }
+    }
+
+    // ===== ТАЙМЕРЫ =====
+    function startTimers() {
+        gameTimer = setInterval(() => {
+            if (!gameActive) return;
+            timeLeft--;
+            elapsedSeconds++;
+
+            document.getElementById('time-left').textContent = timeLeft;
+            const percent = (timeLeft / GAME_DURATION) * 100;
+            const fill = document.getElementById('timer-fill');
+            fill.style.width = percent + '%';
+            if (timeLeft <= 10) fill.classList.add('danger');
+
+            // Рост активных каждые 10 секунд (+2)
+            if (elapsedSeconds % RAMP_INTERVAL === 0 && activeCount < HOLES) {
+                activeCount = Math.min(HOLES, activeCount + RAMP_AMOUNT);
+            }
+
+            if (timeLeft <= 0) {
+                endGame(true);
+            }
+        }, 1000);
+
+        spawnTimer = setInterval(() => {
+            if (!gameActive) return;
+            spawnCreatures();
+        }, SPAWN_INTERVAL);
+
+        setTimeout(spawnCreatures, 300);
+    }
+
+    // ===== СПАВН =====
+    function spawnCreatures() {
+        if (!gameActive) return;
+
+        const emptyHoles = [];
+        for (let i = 0; i < HOLES; i++) {
+            if (holeState[i] === null) emptyHoles.push(i);
+        }
+
+        const toSpawn = Math.min(activeCount, emptyHoles.length);
+
+        for (let k = 0; k < toSpawn; k++) {
+            const idx = Math.floor(Math.random() * emptyHoles.length);
+            const holeIdx = emptyHoles.splice(idx, 1)[0];
+            showCreatureInHole(holeIdx);
+        }
+    }
+
+    function showCreatureInHole(holeIdx) {
+        const hole = document.querySelector(`.hole[data-index="${holeIdx}"]`);
+        if (!hole) return;
+
+        const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+        const creatureId = Date.now() + '_' + holeIdx + '_' + Math.random();
+
+        holeState[holeIdx] = creatureId;
+
+        const old = hole.querySelector('.creature');
+        if (old) old.remove();
+
+        const creature = document.createElement('div');
+        creature.classList.add('creature');
+        creature.textContent = emoji;
+        creature.dataset.creatureId = creatureId;
+        creature.dataset.holeIdx = holeIdx;
+
+        hole.appendChild(creature);
+        requestAnimationFrame(() => {
+            creature.classList.add('show');
+        });
+
+        const hideTimer = setTimeout(() => {
+            if (!gameActive) return;
+            hideCreature(holeIdx, creatureId, true);
+        }, CREATURE_LIFETIME);
+
+        creatureTimers.push({ holeIdx, creatureId, timer: hideTimer });
+    }
+
+    function hideCreature(holeIdx, creatureId, countAsMiss) {
+        if (holeState[holeIdx] !== creatureId) return;
+        const hole = document.querySelector(`.hole[data-index="${holeIdx}"]`);
+        if (!hole) return;
+        const creature = hole.querySelector(`.creature[data-creature-id="${creatureId}"]`);
+        if (!creature) return;
+
+        creature.classList.remove('show');
+        setTimeout(() => {
+            if (creature && creature.parentNode) creature.remove();
+        }, 250);
+
+        holeState[holeIdx] = null;
+
+        creatureTimers = creatureTimers.filter(t => t.creatureId !== creatureId);
+
+        if (countAsMiss) {
+            misses++;
+            document.getElementById('misses').textContent = misses;
+
+            const miss = document.createElement('div');
+            miss.classList.add('miss-mark');
+            miss.textContent = '✕';
+            hole.style.position = 'relative';
+            hole.appendChild(miss);
+            setTimeout(() => miss.remove(), 600);
+
+            if (misses >= 10) {
+                document.getElementById('miss-item').classList.add('danger');
+            }
+
+            if (misses >= MAX_MISSES) {
+                endGame(false);
+            }
+        }
+    }
+
+    // ===== КЛИК ПО ЛУНКЕ =====
+    function handleHoleClick(holeIdx, e) {
+        if (!gameActive) return;
+        const hole = e.currentTarget;
+        const creature = hole.querySelector('.creature');
+        if (!creature || !creature.classList.contains('show')) return;
+
+        const creatureId = creature.dataset.creatureId;
+        if (holeState[holeIdx] !== creatureId) return;
+
+        const t = creatureTimers.find(x => x.creatureId === creatureId);
+        if (t) {
+            clearTimeout(t.timer);
+            creatureTimers = creatureTimers.filter(x => x.creatureId !== creatureId);
+        }
+
+        creature.classList.remove('show');
+        creature.classList.add('caught');
+
+        score++;
+        document.getElementById('score').textContent = score;
+
+        const plus = document.createElement('div');
+        plus.classList.add('plus-one');
+        plus.textContent = '+1';
+        hole.style.position = 'relative';
+        hole.appendChild(plus);
+        setTimeout(() => plus.remove(), 600);
+
+        setTimeout(() => {
+            if (creature && creature.parentNode) creature.remove();
+        }, 300);
+
+        holeState[holeIdx] = null;
+    }
+
+    // ===== КОНЕЦ ИГРЫ =====
+    function endGame(isWin) {
+        gameActive = false;
+        clearInterval(gameTimer);
+        clearInterval(spawnTimer);
+        creatureTimers.forEach(t => clearTimeout(t.timer));
+        creatureTimers = [];
+
+        document.querySelectorAll('.creature').forEach(c => c.remove());
+        holeState = Array(HOLES).fill(null);
+
+        document.getElementById('final-score').textContent = score;
+
+        if (isWin) {
+            document.getElementById('end-title').textContent = 'ПОЗДРАВЛЯЕМ, ТЫ ПРОШЁЛ (-А) ЗАДАНИЕ «ПОЙМАЙ МОНСТРА»!';
+            document.getElementById('end-title').classList.remove('lose');
+            document.getElementById('end-sub').textContent = 'можешь спать спокойно... Пока...';
+            document.getElementById('end-final').textContent = 'Не забудь отправить скрин в группу!';
+        } else {
+            document.getElementById('end-title').textContent = 'ТЫ ПРОПУСТИЛ СЛИШКОМ МНОГО!';
+            document.getElementById('end-title').classList.add('lose');
+            document.getElementById('end-sub').textContent = 'Монстры разбежались... Попробуй ещё раз!';
+            document.getElementById('end-final').textContent = 'Обнови страницу и попробуй снова';
+        }
+
+        setTimeout(() => {
+            document.getElementById('game-area').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'flex';
+        }, 600);
+    }
+
     window.onload = () => {
-        document.getElementById('maze').style.display = 'none';
+        document.getElementById('game-area').style.display = 'none';
         document.getElementById('end-screen').style.display = 'none';
     };
 </script>
