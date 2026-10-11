@@ -17,6 +17,9 @@
             overflow: hidden;
             background-color: #2a0a38;
             touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         #bg-spiral {
@@ -106,6 +109,7 @@
             transition: all 0.3s ease;
             text-shadow: 1px 1px 0 #000;
             letter-spacing: 1px;
+            touch-action: manipulation;
         }
         .btn:hover {
             background-color: #f26d21; color: #572a7c;
@@ -221,6 +225,7 @@
             transform: translateY(50px);
             transition: transform 0.2s ease;
             filter: drop-shadow(0 0 6px rgba(242,109,33,0.7));
+            pointer-events: none; /* клики ловит сама лунка */
         }
         .creature.show {
             transform: translateY(0);
@@ -343,10 +348,11 @@
         <div class="controls-box">
             <div class="ctrl-title">ПРАВИЛА</div>
             <div class="ctrl-line"><span>1.</span> Из могил выскакивают 🎃👻🧟‍♂️💀</div>
-            <div class="ctrl-line"><span>2.</span> Кликай/тапай по ним, пока не спрятались (2 сек)</div>
-            <div class="ctrl-line"><span>3.</span> Каждые 10 сек существ становится на 2 больше</div>
-            <div class="ctrl-line"><span>4.</span> Пропустил существо — счётчик непойманных +1</div>
-            <div class="ctrl-line"><span>5.</span> Дошёл до 15 непойманных — игра сначала</div>
+            <div class="ctrl-line"><span>2.</span> Кликай/тапай по ним, пока не спрятались (3 сек)</div>
+            <div class="ctrl-line"><span>3.</span> Можно тыкать быстро по нескольким — мультитап</div>
+            <div class="ctrl-line"><span>4.</span> Каждые 10 сек существ становится на 2 больше</div>
+            <div class="ctrl-line"><span>5.</span> Пропустил существо — счётчик непойманных +1</div>
+            <div class="ctrl-line"><span>6.</span> Дошёл до 15 непойманных — игра сначала</div>
             <div class="ctrl-line"><span>Цель:</span> продержаться 1 минуту</div>
         </div>
         <button class="btn" onclick="startGame()">Начать игру</button>
@@ -384,11 +390,11 @@
     const ROWS = 4;
     const HOLES = COLS * ROWS;       // 16
     const GAME_DURATION = 60;
-    const CREATURE_LIFETIME = 2000;  // 2 сек
+    const CREATURE_LIFETIME = 3000;  // 3 секунды
     const SPAWN_INTERVAL = 2000;     // каждые 2 сек
     const RAMP_INTERVAL = 10;        // каждые 10 сек
     const RAMP_AMOUNT = 2;           // +2
-    const MAX_MISSES = 15;           // порог проигрыша
+    const MAX_MISSES = 15;
 
     let score = 0;
     let misses = 0;
@@ -437,7 +443,24 @@
             const hole = document.createElement('div');
             hole.classList.add('hole');
             hole.dataset.index = i;
-            hole.addEventListener('click', (e) => handleHoleClick(i, e));
+
+            // === МУЛЬТИТАП ===
+            // Используем touchstart и mousedown для мгновенного отклика.
+            // preventDefault + stopPropagation — чтобы не было задержек и двойных срабатываний.
+            hole.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handleHoleTap(i);
+            }, { passive: false });
+
+            hole.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return; // только левая кнопка
+                e.preventDefault();
+                handleHoleTap(i);
+            });
+
+            // Отключаем стандартный click, чтобы не дублировался
+            hole.addEventListener('click', (e) => e.preventDefault());
+
             grid.appendChild(hole);
         }
     }
@@ -455,7 +478,6 @@
             fill.style.width = percent + '%';
             if (timeLeft <= 10) fill.classList.add('danger');
 
-            // Рост активных каждые 10 секунд (+2)
             if (elapsedSeconds % RAMP_INTERVAL === 0 && activeCount < HOLES) {
                 activeCount = Math.min(HOLES, activeCount + RAMP_AMOUNT);
             }
@@ -559,16 +581,18 @@
         }
     }
 
-    // ===== КЛИК ПО ЛУНКЕ =====
-    function handleHoleClick(holeIdx, e) {
+    // ===== ОБРАБОТКА ТАПА (мультитап) =====
+    function handleHoleTap(holeIdx) {
         if (!gameActive) return;
-        const hole = e.currentTarget;
+        const hole = document.querySelector(`.hole[data-index="${holeIdx}"]`);
+        if (!hole) return;
         const creature = hole.querySelector('.creature');
         if (!creature || !creature.classList.contains('show')) return;
 
         const creatureId = creature.dataset.creatureId;
         if (holeState[holeIdx] !== creatureId) return;
 
+        // Отменяем таймер исчезновения
         const t = creatureTimers.find(x => x.creatureId === creatureId);
         if (t) {
             clearTimeout(t.timer);
